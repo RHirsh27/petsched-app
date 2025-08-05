@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const emailService = require('../services/emailService');
 
 const router = express.Router();
 const dbPath = path.join(__dirname, '..', 'database.sqlite');
@@ -131,7 +132,7 @@ router.post('/', (req, res) => {
     });
   }
   
-  // Check if pet exists
+  // Check if pet exists and get pet details
   db.get('SELECT * FROM pets WHERE id = ?', [pet_id], (err, pet) => {
     if (err) {
       console.error('Error checking pet existence:', err);
@@ -209,6 +210,39 @@ router.post('/', (req, res) => {
               error: 'Appointment created but failed to retrieve',
               message: err.message 
             });
+          }
+          
+          // Send confirmation email (async, don't wait for it)
+          if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+            const appointmentData = {
+              id: row.id,
+              date: `${row.appointment_date} ${row.appointment_time}`,
+              type: row.service_type,
+              notes: row.notes
+            };
+            
+            const petData = {
+              name: row.pet_name,
+              species: row.pet_species,
+              breed: row.pet_breed
+            };
+            
+            const userData = {
+              name: row.owner_name,
+              email: req.user?.email || 'owner@example.com' // You might want to get this from auth
+            };
+            
+            emailService.sendAppointmentConfirmation(appointmentData, petData, userData)
+              .then(result => {
+                if (result.success) {
+                  console.log('Appointment confirmation email sent successfully');
+                } else {
+                  console.error('Failed to send confirmation email:', result.error);
+                }
+              })
+              .catch(error => {
+                console.error('Error sending confirmation email:', error);
+              });
           }
           
           res.status(201).json({

@@ -53,6 +53,7 @@ const initDatabase = async () => {
         age INTEGER,
         owner_name TEXT NOT NULL,
         owner_phone TEXT,
+        photo_url TEXT,
         clinic_id TEXT,
         user_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -71,6 +72,8 @@ const initDatabase = async () => {
         duration_minutes INTEGER DEFAULT 60,
         notes TEXT,
         status TEXT DEFAULT 'scheduled',
+        payment_status TEXT DEFAULT 'pending',
+        payment_intent_id TEXT,
         clinic_id TEXT,
         user_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -91,12 +94,16 @@ const authRoutes = require('./routes/auth');
 const petsRoutes = require('./routes/pets');
 const appointmentsRoutes = require('./routes/appointments');
 const billingRoutes = require('./routes/billing');
+const uploadsRoutes = require('./routes/uploads');
+const paymentsRoutes = require('./routes/payments');
 
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api', uploadsRoutes); // Uploads routes
+app.use('/api/payments', paymentsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -6,6 +6,7 @@ const {
   refreshToken,
   authenticateToken 
 } = require('../middleware/auth');
+const emailService = require('../services/emailService');
 const router = express.Router();
 
 // User registration
@@ -29,6 +30,21 @@ router.post('/register', async (req, res) => {
     }
 
     const user = await registerUser({ email, password, name, role, clinic_id });
+    
+    // Send welcome email (async, don't wait for it)
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      emailService.sendWelcomeEmail(user)
+        .then(result => {
+          if (result.success) {
+            console.log('Welcome email sent successfully');
+          } else {
+            console.error('Failed to send welcome email:', result.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error sending welcome email:', error);
+        });
+    }
     
     res.status(201).json({
       success: true,
